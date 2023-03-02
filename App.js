@@ -1,76 +1,49 @@
-import React, { useRef, useState } from "react";
-import { Animated, PanResponder, View } from "react-native";
+import React, { useRef } from "react";
 import styled from "styled-components/native";
 import { Ionicons } from "@expo/vector-icons";
-import icons from "./icons";
+import { Animated, PanResponder, View } from "react-native";
+
+const BLACK_COLOR = "#1e272e";
+const GREY = "#485460";
+const GREEN = "#2ecc71";
+const RED = "#e74c3c";
 
 const Container = styled.View`
   flex: 1;
+  background-color: ${BLACK_COLOR};
+`;
+const Edge = styled.View`
+  flex: 1;
   justify-content: center;
   align-items: center;
-  background-color: #ffc048;
 `;
-
-const CardContainer = styled.View`
+const Center = styled.View`
   flex: 3;
   justify-content: center;
   align-items: center;
 `;
-
-const Card = styled(new Animated.createAnimatedComponent(View))`
-  background-color: white;
-  width: 300px;
-  height: 300px;
+const Word = styled.Text`
+  font-size: 38px;
+  color: ${(props) => props.color};
+  font-weight: 500;
+`;
+const WordContainer = styled(Animated.createAnimatedComponent(View))`
+  width: 100px;
+  height: 100px;
   justify-content: center;
   align-items: center;
-  border-radius: 12px;
-  box-shadow: 10px 10px 5px rgba(0, 0, 0, 0.2);
-  position: absolute;
+  background-color: ${GREY};
+  border-radius: 50px;
 `;
-
-const BtnContainer = styled.View`
-  flex: 1;
-  flex-direction: row;
-`;
-
-const Btn = styled.TouchableOpacity`
-  margin: 0px 30px;
+const IconCard = styled(Animated.createAnimatedComponent(View))`
+  background-color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
 `;
 
 export default function App() {
   const scale = useRef(new Animated.Value(1)).current;
-  const position = useRef(new Animated.Value(0)).current;
-  const rotation = position.interpolate({
-    inputRange: [-250, 250],
-    outputRange: ["-15deg", "15deg"],
-  });
-  const secondScale = position.interpolate({
-    inputRange: [-250, 0, 250],
-    outputRange: [1, 0.7, 1],
-    extrapolate: "clamp",
-  });
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onPanResponderMove: (_, { dx }) => {
-        position.setValue(dx);
-        // console.log(dx);
-      },
-      onPanResponderGrant: () => {
-        onPressIn.start();
-      },
-      onPanResponderRelease: (_, { dx }) => {
-        if (dx < -200) {
-          goLeft.start(onDismiss);
-        } else if (dx > 200) {
-          goRight.start(onDismiss);
-        } else {
-          Animated.parallel([onPressOut, goCenter]).start();
-        }
-      },
-    })
-  ).current;
+  const position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
 
   const onPressIn = Animated.spring(scale, {
     toValue: 0.9,
@@ -80,68 +53,48 @@ export default function App() {
     toValue: 1,
     useNativeDriver: true,
   });
-  const goCenter = Animated.spring(position, {
+  const goHome = Animated.spring(position, {
     toValue: 0,
     useNativeDriver: true,
   });
-  const goLeft = Animated.spring(position, {
-    toValue: -500,
-    useNativeDriver: true,
-    restSpeedThreshold: 100,
-    restDisplacementThreshold: 100,
-  });
-  const goRight = Animated.spring(position, {
-    toValue: 500,
-    useNativeDriver: true,
-    restSpeedThreshold: 100,
-    restDisplacementThreshold: 100,
-  });
 
-  const closePress = () => {
-    goLeft.start(onDismiss);
-  };
-  const checkPress = () => {
-    goRight.start(onDismiss);
-  };
-
-  const [index, setIndex] = useState(0);
-  const onDismiss = () => {
-    scale.setValue(1);
-    position.setValue(0);
-    setIndex((prev) => prev + 1);
-  };
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        onPressIn.start();
+      },
+      onPanResponderMove: (_, { dx, dy }) => {
+        position.setValue({ x: dx, y: dy });
+      },
+      onPanResponderRelease: () => {
+        Animated.parallel([onPressOut, goHome]).start();
+      },
+    })
+  ).current;
 
   return (
     <Container>
-      <CardContainer>
-        <Card
-          style={{
-            transform: [{ scale: secondScale }],
-          }}
-        >
-          <Ionicons name={icons[index + 1]} color="#192a56" size={98} />
-        </Card>
-        <Card
+      <Edge>
+        <WordContainer>
+          <Word color={GREEN}>알아</Word>
+        </WordContainer>
+      </Edge>
+      <Center>
+        <IconCard
           {...panResponder.panHandlers}
           style={{
-            transform: [
-              { scale },
-              { translateX: position },
-              { rotateZ: rotation },
-            ],
+            transform: [...position.getTranslateTransform(), { scale }],
           }}
         >
-          <Ionicons name={icons[index]} color="#192a56" size={98} />
-        </Card>
-      </CardContainer>
-      <BtnContainer>
-        <Btn onPress={closePress}>
-          <Ionicons name="close-circle" color="#f53b57" size={88} />
-        </Btn>
-        <Btn onPress={checkPress}>
-          <Ionicons name="checkmark-circle" color="#10ac84" size={88} />
-        </Btn>
-      </BtnContainer>
+          <Ionicons name="beer" color={GREY} size={76} />
+        </IconCard>
+      </Center>
+      <Edge>
+        <WordContainer>
+          <Word color={RED}>몰라</Word>
+        </WordContainer>
+      </Edge>
     </Container>
   );
 }
