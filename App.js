@@ -1,7 +1,8 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Animated, PanResponder, View } from "react-native";
 import styled from "styled-components/native";
 import { Ionicons } from "@expo/vector-icons";
+import icons from "./icons";
 
 const Container = styled.View`
   flex: 1;
@@ -48,6 +49,7 @@ export default function App() {
     outputRange: [1, 0.7, 1],
     extrapolate: "clamp",
   });
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -60,9 +62,9 @@ export default function App() {
       },
       onPanResponderRelease: (_, { dx }) => {
         if (dx < -200) {
-          goLeft.start();
+          goLeft.start(onDismiss);
         } else if (dx > 200) {
-          goRight.start();
+          goRight.start(onDismiss);
         } else {
           Animated.parallel([onPressOut, goCenter]).start();
         }
@@ -78,7 +80,6 @@ export default function App() {
     toValue: 1,
     useNativeDriver: true,
   });
-
   const goCenter = Animated.spring(position, {
     toValue: 0,
     useNativeDriver: true,
@@ -93,10 +94,17 @@ export default function App() {
   });
 
   const closePress = () => {
-    goLeft.start();
+    goLeft.start(onDismiss);
   };
   const checkPress = () => {
-    goRight.start();
+    goRight.start(onDismiss);
+  };
+
+  const [index, setIndex] = useState(0);
+  const onDismiss = () => {
+    scale.setValue(1);
+    position.setValue(0);
+    setIndex((prev) => prev + 1);
   };
 
   return (
@@ -107,7 +115,7 @@ export default function App() {
             transform: [{ scale: secondScale }],
           }}
         >
-          <Ionicons name="beer" color="#192a56" size={98} />
+          <Ionicons name={icons[index + 1]} color="#192a56" size={98} />
         </Card>
         <Card
           {...panResponder.panHandlers}
@@ -119,7 +127,7 @@ export default function App() {
             ],
           }}
         >
-          <Ionicons name="pizza" color="#192a56" size={98} />
+          <Ionicons name={icons[index]} color="#192a56" size={98} />
         </Card>
       </CardContainer>
       <BtnContainer>
